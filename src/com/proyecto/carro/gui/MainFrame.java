@@ -74,6 +74,7 @@ public class MainFrame extends JFrame {
         setTitle("IA Conducción Autónoma - Red Neuronal y Algoritmo Genético");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(850, 560);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         getContentPane().setBackground(bgDark);
 
