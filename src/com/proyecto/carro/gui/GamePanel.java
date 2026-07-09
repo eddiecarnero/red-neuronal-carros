@@ -21,27 +21,27 @@ public class GamePanel extends JPanel {
     private boolean showAll = true;
     private boolean humanMode = false;
 
-    // Track Editor Variables
+    // Variables del Editor de Pistas
     private boolean editorMode = false;
     private Point2D.Double selectedWaypoint = null;
     private int selectedIndex = -1;
     private final int waypointRadius = 7;
 
-    // Pan & Zoom Variables
+    // Variables de Desplazamiento y Zoom
     private double zoomFactor = 1.0;
     private double offsetX = 0.0;
     private double offsetY = 0.0;
     private Point dragStartPoint = null;
 
-    // Theme Colors (Catppuccin Mocha)
+    // Colores del tema (Catppuccin Mocha)
     private final Color bgDark = new Color(30, 30, 46);
 
-    // Color systems for both algorithms
-    private final Color carSwarmA = new Color(137, 220, 235, 45); // Cyan translucent (Swarm A)
-    private final Color carBestA = new Color(137, 180, 250);       // Blue solid (Best A)
-    private final Color carSwarmB = new Color(245, 194, 231, 45); // Pink translucent (Swarm B)
-    private final Color carBestB = new Color(243, 139, 168);       // Red solid (Best B)
-    private final Color carHumanColor = new Color(203, 166, 247);  // Purple (Human)
+    // Sistemas de colores para ambos algoritmos
+    private final Color carSwarmA = new Color(137, 220, 235, 45); // Cian translúcido (Enjambre A)
+    private final Color carBestA = new Color(137, 180, 250);       // Azul sólido (Mejor A)
+    private final Color carSwarmB = new Color(245, 194, 231, 45); // Rosa translúcido (Enjambre B)
+    private final Color carBestB = new Color(243, 139, 168);       // Rojo sólido (Mejor B)
+    private final Color carHumanColor = new Color(203, 166, 247);  // Púrpura (Humano)
 
     private final Color sensorNormalA = new Color(137, 220, 235, 70);
     private final Color sensorWarningA = new Color(243, 139, 168, 200);
@@ -100,14 +100,14 @@ public class GamePanel extends JPanel {
             double scaleVal = 1.1;
 
             if (e.getWheelRotation() < 0) {
-                // Zoom In
+                // Acercar zoom
                 zoomFactor = Math.min(4.0, zoomFactor * scaleVal);
             } else {
-                // Zoom Out
+                // Alejar zoom
                 zoomFactor = Math.max(0.4, zoomFactor / scaleVal);
             }
 
-            // Adjust translation offsets so the zoom centers on the mouse cursor
+            // Ajustar compensación de traducción para centrar el zoom en el cursor del ratón
             Point mousePt = e.getPoint();
             double mouseWorldX = (mousePt.x - offsetX) / oldZoom;
             double mouseWorldY = (mousePt.y - offsetY) / oldZoom;
@@ -125,7 +125,7 @@ public class GamePanel extends JPanel {
             public void mousePressed(MouseEvent e) {
                 if (manager == null) return;
 
-                // Reset camera offset on middle-click (scroll-wheel click)
+                // Restablecer la posición de la cámara al hacer clic central (clic en la rueda)
                 if (SwingUtilities.isMiddleMouseButton(e)) {
                     resetCamera();
                     return;
@@ -133,12 +133,12 @@ public class GamePanel extends JPanel {
 
                 List<Point2D.Double> basePoints = manager.getTrack().getBasePoints();
 
-                // Convert screen mouse coordinates to world coordinates
+                // Convertir coordenadas del ratón de pantalla a coordenadas del mundo
                 double worldX = (e.getX() - offsetX) / zoomFactor;
                 double worldY = (e.getY() - offsetY) / zoomFactor;
                 Point2D.Double worldPt = new Point2D.Double(worldX, worldY);
 
-                // 1. Check if clicked on a waypoint (only active in editor mode)
+                // 1. Comprobar si se hizo clic en un punto de control (solo activo en modo editor)
                 selectedIndex = -1;
                 selectedWaypoint = null;
 
@@ -152,7 +152,7 @@ public class GamePanel extends JPanel {
                         }
                     }
 
-                    // 2. Right-click deletes a waypoint (keep at least 4 for splines)
+                    // 2. Click derecho elimina un punto de control (mantener al menos 4 para splines)
                     if (SwingUtilities.isRightMouseButton(e) && selectedIndex != -1) {
                         if (basePoints.size() > 4) {
                             basePoints.remove(selectedIndex);
@@ -168,7 +168,7 @@ public class GamePanel extends JPanel {
                         return;
                     }
 
-                    // 3. Double-click adds a new waypoint at double-clicked coordinates
+                    // 3. Doble clic añade un nuevo punto de control en las coordenadas pulsadas
                     if (e.getClickCount() == 2 && !SwingUtilities.isRightMouseButton(e) && selectedIndex == -1) {
                         Point2D.Double newPt = new Point2D.Double(worldX, worldY);
                         if (basePoints.isEmpty()) {
@@ -191,7 +191,7 @@ public class GamePanel extends JPanel {
                     }
                 }
 
-                // 4. Start Panning (right-click always, or left-click when not dragging waypoints)
+                // 4. Iniciar desplazamiento (siempre con clic derecho, o clic izquierdo si no se arrastran puntos)
                 if (SwingUtilities.isRightMouseButton(e) || selectedWaypoint == null) {
                     dragStartPoint = e.getPoint();
                 }
@@ -208,19 +208,19 @@ public class GamePanel extends JPanel {
         MouseMotionAdapter motionAdapter = new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                // 1. Handle Waypoint Dragging (Left-click drag in editor mode)
+                // 1. Gestionar arrastre de puntos de control (clic izquierdo en modo editor)
                 if (editorMode && selectedWaypoint != null && !SwingUtilities.isRightMouseButton(e)) {
                     double worldX = (e.getX() - offsetX) / zoomFactor;
                     double worldY = (e.getY() - offsetY) / zoomFactor;
 
-                    // Constrain coordinates to fit safely inside the panel boundary
+                    // Limitar coordenadas para encajar dentro del panel
                     selectedWaypoint.x = Math.max(10, Math.min(440, worldX));
                     selectedWaypoint.y = Math.max(10, Math.min(440, worldY));
 
                     manager.getTrack().regenerate();
                     repaint();
                 }
-                // 2. Handle Canvas Panning (Dragging)
+                // 2. Gestionar desplazamiento de cámara (arrastre)
                 else if (dragStartPoint != null) {
                     double dx = e.getX() - dragStartPoint.x;
                     double dy = e.getY() - dragStartPoint.y;
@@ -248,53 +248,53 @@ public class GamePanel extends JPanel {
         if (manager == null) return;
         Track track = manager.getTrack();
 
-        // Save default transformation matrix
+        // Guardar matriz de transformación predeterminada
         AffineTransform oldTransform = g2d.getTransform();
 
-        // Apply custom panning and zoom factor transformations
+        // Aplicar transformaciones personalizadas de desplazamiento y zoom
         g2d.translate(offsetX, offsetY);
         g2d.scale(zoomFactor, zoomFactor);
 
-        // 1. Draw track floor and boundaries
+        // 1. Dibujar pista y límites
         track.draw(g2d);
 
-        // 2. If in Editor Mode, draw waypoint handles and skip drawing cars
+        // 2. Si está en Modo Editor, dibujar tiradores de puntos y saltar renderizado de carros
         if (editorMode) {
             List<Point2D.Double> basePoints = track.getBasePoints();
             g2d.setStroke(new BasicStroke(1.5f));
             for (int i = 0; i < basePoints.size(); i++) {
                 Point2D.Double pt = basePoints.get(i);
                 if (i == 0) {
-                    g2d.setColor(new Color(249, 226, 175)); // Gold for start point
+                    g2d.setColor(new Color(249, 226, 175)); // Dorado para punto de inicio
                 } else {
-                    g2d.setColor(new Color(250, 179, 135)); // Peach/Orange for other waypoints
+                    g2d.setColor(new Color(250, 179, 135)); // Melocotón/Naranja para otros puntos
                 }
                 g2d.fillOval((int)(pt.x - waypointRadius), (int)(pt.y - waypointRadius), waypointRadius * 2, waypointRadius * 2);
                 g2d.setColor(Color.WHITE);
                 g2d.drawOval((int)(pt.x - waypointRadius), (int)(pt.y - waypointRadius), waypointRadius * 2, waypointRadius * 2);
 
-                // Draw waypoint numbering
+                // Dibujar numeración de puntos de control
                 g2d.setFont(new Font("Segoe UI", Font.BOLD, 10));
                 g2d.setColor(Color.WHITE);
                 g2d.drawString(String.valueOf(i), (int)pt.x - 3, (int)pt.y - 10);
             }
-            // Restore default transform and return
+            // Restaurar transformación predeterminada y salir
             g2d.setTransform(oldTransform);
             return;
         }
 
         if (humanMode) {
-            // Render manual play
+            // Renderizar juego manual
             if (humanCar != null && humanCar.isAlive()) {
                 drawSensorRays(g2d, humanCar, sensorNormalA, sensorWarningA);
                 drawCar(g2d, humanCar, carHumanColor);
             }
         } else {
-            // Render AI populations
+            // Renderizar poblaciones de IA
             List<Car> popA = manager.getPopulationA();
             List<Car> popB = manager.getPopulationB();
 
-            // Find current best alive car for Pop A
+            // Buscar el mejor carro vivo para Población A
             Car bestA = null;
             for (Car car : popA) {
                 if (car.isAlive()) {
@@ -307,7 +307,7 @@ public class GamePanel extends JPanel {
                 bestA = popA.get(0);
             }
 
-            // Find current best alive car for Pop B
+            // Buscar el mejor carro vivo para Población B
             Car bestB = null;
             for (Car car : popB) {
                 if (car.isAlive()) {
@@ -320,7 +320,7 @@ public class GamePanel extends JPanel {
                 bestB = popB.get(0);
             }
 
-            // 3. Draw Sensors for best alive leaders
+            // 3. Dibujar sensores para los mejores líderes vivos
             if (bestA != null && bestA.isAlive()) {
                 drawSensorRays(g2d, bestA, sensorNormalA, sensorWarningA);
             }
@@ -328,7 +328,7 @@ public class GamePanel extends JPanel {
                 drawSensorRays(g2d, bestB, sensorNormalB, sensorWarningB);
             }
 
-            // 4. Draw Swarms (A in translucent Cyan, B in translucent Pink)
+            // 4. Dibujar enjambres (A en cian translúcido, B en rosa translúcido)
             if (showAll) {
                 for (Car car : popA) {
                     if (car.isAlive() && car != bestA) {
@@ -342,7 +342,7 @@ public class GamePanel extends JPanel {
                 }
             }
 
-            // 5. Draw Best Cars (A in solid Blue, B in solid Pink)
+            // 5. Dibujar mejores carros (A en azul sólido, B en rojo/rosa sólido)
             if (bestA != null && bestA.isAlive()) {
                 drawCar(g2d, bestA, carBestA);
             }
@@ -351,7 +351,7 @@ public class GamePanel extends JPanel {
             }
         }
 
-        // Restore default transformation matrix
+        // Restaurar matriz de transformación predeterminada
         g2d.setTransform(oldTransform);
     }
 

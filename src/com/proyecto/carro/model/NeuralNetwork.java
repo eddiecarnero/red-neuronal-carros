@@ -10,10 +10,10 @@ public class NeuralNetwork implements Serializable {
     private final int hiddenSize;
     private final int outputSize;
 
-    public double[][] weights1; // Input -> Hidden
-    public double[] biases1;    // Hidden biases
-    public double[][] weights2; // Hidden -> Output
-    public double[] biases2;    // Output biases
+    public double[][] weights1; // Entrada -> Oculta
+    public double[] biases1;    // Sesgos de la capa oculta
+    public double[][] weights2; // Oculta -> Salida
+    public double[] biases2;    // Sesgos de la capa de salida
 
     private static final Random rand = new Random();
 
@@ -40,7 +40,7 @@ public class NeuralNetwork implements Serializable {
     private void randomizeMatrix(double[][] m) {
         for (int i = 0; i < m.length; i++) {
             for (int j = 0; j < m[i].length; j++) {
-                // Xavier/Glorot initialization
+                // Inicialización Xavier/Glorot
                 m[i][j] = (rand.nextDouble() * 2.0 - 1.0) * Math.sqrt(2.0 / inputSize);
             }
         }
@@ -52,32 +52,32 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    // Feedforward pass
+    // Paso de inferencia (Feedforward)
     public double[] compute(double[] inputs) {
-        // Input -> Hidden
+        // Entrada -> Oculta
         double[] hidden = new double[hiddenSize];
         for (int j = 0; j < hiddenSize; j++) {
             double sum = biases1[j];
             for (int i = 0; i < inputSize; i++) {
                 sum += inputs[i] * weights1[i][j];
             }
-            hidden[j] = Math.tanh(sum); // tanh activation
+            hidden[j] = Math.tanh(sum); // Activación tangente hiperbólica
         }
 
-        // Hidden -> Output
+        // Oculta -> Salida
         double[] outputs = new double[outputSize];
         for (int j = 0; j < outputSize; j++) {
             double sum = biases2[j];
             for (int i = 0; i < hiddenSize; i++) {
                 sum += hidden[i] * weights2[i][j];
             }
-            outputs[j] = Math.tanh(sum); // tanh activation (outputs in range [-1.0, 1.0])
+            outputs[j] = Math.tanh(sum); // Activación tangente hiperbólica (salidas en rango [-1.0, 1.0])
         }
 
         return outputs;
     }
 
-    // Breed a child by crossing genomes with a partner
+    // Cruce genético de dos cerebros (Crossover)
     public NeuralNetwork crossover(NeuralNetwork partner) {
         NeuralNetwork child = new NeuralNetwork(inputSize, hiddenSize, outputSize);
 
@@ -103,7 +103,7 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    // Mutate weights/biases using Gaussian noise
+    // Mutar pesos y sesgos aplicando ruido gaussiano
     public void mutate(double mutationRate) {
         mutateMatrix(weights1, mutationRate);
         mutateArray(biases1, mutationRate);
@@ -116,7 +116,7 @@ public class NeuralNetwork implements Serializable {
             for (int j = 0; j < m[i].length; j++) {
                 if (rand.nextDouble() < rate) {
                     m[i][j] += rand.nextGaussian() * 0.2;
-                    m[i][j] = Math.max(-3.0, Math.min(3.0, m[i][j])); // boundary capping
+                    m[i][j] = Math.max(-3.0, Math.min(3.0, m[i][j])); // Limitar el rango de pesos
                 }
             }
         }

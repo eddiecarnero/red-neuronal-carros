@@ -9,31 +9,31 @@ import java.util.List;
 public class Car implements Serializable, Comparable<Car> {
     private static final long serialVersionUID = 1L;
 
-    // Car physics parameters
+    // Parámetros físicos del carro
     private double x;
     private double y;
-    private double theta; // Orientation in radians
+    private double theta; // Orientación en radianes
     private double speed;
 
     private final double maxSpeed = 4.5;
     private final double minSpeed = -1.5;
     private final double friction = 0.985;
     
-    // Save last frame position to check checkpoint crossings
+    // Guardar la posición del último fotograma para comprobar cruces de checkpoints
     private double prevX;
     private double prevY;
 
-    // Car dimensions
+    // Dimensiones del carro
     private final double width = 18.0;
     private final double height = 10.0;
 
     private boolean alive;
-    private int score; // Checkpoints crossed
+    private int score; // Checkpoints cruzados
     private int framesAlive;
     private int currentCheckpoint;
     private double fitness;
 
-    // Sensor parameters
+    // Parámetros de los sensores
     private final int numSensors;
     private final double rayLength = 150.0;
     private final double[] sensorReadings;
@@ -46,7 +46,7 @@ public class Car implements Serializable, Comparable<Car> {
         this.sensorReadings = new double[numSensors];
         this.sensorPoints = new Point2D.Double[numSensors];
         
-        // Brain inputs: numSensors + 1 (for speed)
+        // Entradas del cerebro: numSensors + 1 (para la velocidad)
         this.brain = new NeuralNetwork(numSensors + 1, 10, 2); 
         
         reset(startX, startY, startAngle);
@@ -136,11 +136,11 @@ public class Car implements Serializable, Comparable<Car> {
     }
 
     /**
-     * Executes the LIDAR raycasting against all wall segments.
+     * Ejecuta el trazado de rayos LIDAR contra todos los segmentos de pared.
      */
     public void updateSensors(List<Line2D.Double> walls) {
         for (int i = 0; i < numSensors; i++) {
-            // Distribute ray angles dynamically in a front-facing arc [-90 deg, +90 deg]
+            // Distribuir los ángulos de los rayos dinámicamente en un arco frontal [-90 grados, +90 grados]
             double angleOffset = 0.0;
             if (numSensors > 1) {
                 angleOffset = -Math.PI / 2.0 + i * Math.PI / (numSensors - 1);
@@ -150,8 +150,8 @@ public class Car implements Serializable, Comparable<Car> {
             double rx2 = x + rayLength * Math.cos(rayAngle);
             double ry2 = y + rayLength * Math.sin(rayAngle);
 
-            // Find closest intersection with walls
-            double closestT = 1.0; // 1.0 means no intersection within ray length
+            // Buscar la intersección más cercana con las paredes
+            double closestT = 1.0; // 1.0 significa que no hay intersección dentro del rango del rayo
             
             for (Line2D.Double wall : walls) {
                 double t = getLineIntersection(x, y, rx2, ry2, wall.x1, wall.y1, wall.x2, wall.y2);
@@ -162,7 +162,7 @@ public class Car implements Serializable, Comparable<Car> {
 
             sensorReadings[i] = closestT;
             
-            // Calculate coordinates of intersection point
+            // Calcular las coordenadas del punto de intersección
             double ix = x + (rayLength * closestT) * Math.cos(rayAngle);
             double iy = y + (rayLength * closestT) * Math.sin(rayAngle);
             sensorPoints[i] = new Point2D.Double(ix, iy);
@@ -170,10 +170,10 @@ public class Car implements Serializable, Comparable<Car> {
     }
 
     /**
-     * Standard line segment intersection helper.
-     * Ray segment: (x1, y1) -> (x2, y2)
-     * Wall segment: (x3, y3) -> (x4, y4)
-     * Returns: t value [0.0..1.0] representing intersection depth along the ray.
+     * Ayudante estándar de intersección de segmentos de línea.
+     * Segmento de rayo: (x1, y1) -> (x2, y2)
+     * Segmento de pared: (x3, y3) -> (x4, y4)
+     * Retorna: el valor t [0.0..1.0] que representa la profundidad de intersección a lo largo del rayo.
      */
     private double getLineIntersection(double x1, double y1, double x2, double y2,
                                        double x3, double y3, double x4, double y4) {
@@ -184,7 +184,7 @@ public class Car implements Serializable, Comparable<Car> {
 
         double det = dx1 * dy2 - dy1 * dx2;
         if (Math.abs(det) < 0.0001) {
-            return 1.0; // Parallel lines
+            return 1.0; // Líneas paralelas
         }
 
         double t = ((x3 - x1) * dy2 - (y3 - y1) * dx2) / det;
@@ -197,34 +197,34 @@ public class Car implements Serializable, Comparable<Car> {
     }
 
     /**
-     * AI update (sensors -> brain -> physics).
+     * Actualización de la IA (sensores -> cerebro -> física).
      */
     public void update(List<Line2D.Double> walls) {
         if (!alive) return;
 
         framesAlive++;
 
-        // 1. Update distance sensor readings
+        // 1. Actualizar las lecturas de los sensores de distancia
         updateSensors(walls);
 
-        // 2. Build brain inputs: [sensors..., normalizedSpeed]
+        // 2. Construir las entradas del cerebro: [sensores..., velocidadNormalizada]
         double[] inputs = new double[numSensors + 1];
         for (int i = 0; i < numSensors; i++) {
             inputs[i] = sensorReadings[i];
         }
         inputs[numSensors] = speed / maxSpeed;
 
-        // 3. Compute brain outputs
+        // 3. Calcular las salidas del cerebro
         double[] outputs = brain.compute(inputs);
-        double steerInput = outputs[0]; // [-1.0..1.0]
-        double accelInput = outputs[1]; // [-1.0..1.0]
+        double steerInput = outputs[0]; // Giro [-1.0..1.0]
+        double accelInput = outputs[1]; // Aceleración [-1.0..1.0]
 
-        // 4. Update physics
+        // 4. Actualizar la física
         applyMovement(steerInput, accelInput, true);
     }
 
     /**
-     * Manual human keyboard controls.
+     * Controles manuales del teclado humano.
      */
     public void updateManual(double steerInput, double accelInput, List<Line2D.Double> walls) {
         if (!alive) return;
@@ -237,43 +237,43 @@ public class Car implements Serializable, Comparable<Car> {
         prevX = x;
         prevY = y;
 
-        // Apply Acceleration
+        // Aplicar aceleración
         if (accelInput > 0.0) {
             speed += 0.12 * accelInput;
         } else if (accelInput < 0.0) {
-            speed += 0.08 * accelInput; // braking / reverse
+            speed += 0.08 * accelInput; // Frenado / Marcha atrás
         }
 
-        // Apply Friction drag
+        // Aplicar arrastre de fricción
         speed *= friction;
 
-        // Cap speed limits
+        // Limitar los extremos de velocidad
         if (speed > maxSpeed) speed = maxSpeed;
         if (speed < minSpeed) speed = minSpeed;
 
-        // Enforce a minimum speed for AI cars so they don't get stuck standing still
+        // Forzar una velocidad mínima para los carros de IA para que no se queden atascados inmóviles
         if (isAI && speed < 0.8) {
             speed = 0.8;
         }
 
-        // Apply Steering (turning rate scales with speed to avoid spinning in place)
+        // Aplicar dirección (la tasa de giro escala con la velocidad para evitar girar sobre el eje inmóvil)
         double steeringScale = Math.min(1.0, Math.abs(speed) / 1.5);
         double steerAngle = 0.06 * steerInput * steeringScale;
         theta += steerAngle;
 
-        // Move coordinates
+        // Mover coordenadas
         x += speed * Math.cos(theta);
         y += speed * Math.sin(theta);
     }
 
     /**
-     * Check if the car collides with any of the wall segments.
-     * Uses point-to-segment distance.
+     * Comprueba si el carro colisiona con alguno de los segmentos de pared.
+     * Utiliza la distancia de punto a segmento.
      */
     public void checkCollisions(List<Line2D.Double> walls) {
         if (!alive) return;
 
-        double collisionRadius = 5.0; // Bounding radius of the car
+        double collisionRadius = 5.0; // Radio de colisión del carro
         for (Line2D.Double wall : walls) {
             if (wall.ptSegDist(x, y) < collisionRadius) {
                 setAlive(false);
@@ -283,7 +283,7 @@ public class Car implements Serializable, Comparable<Car> {
     }
 
     /**
-     * Verifies if the car crossed its next target checkpoint.
+     * Verifica si el carro cruzó su próximo checkpoint objetivo.
      */
     public void checkCheckpoint(List<Line2D.Double> checkpoints) {
         if (!alive) return;
@@ -291,22 +291,22 @@ public class Car implements Serializable, Comparable<Car> {
         int nextCpIndex = currentCheckpoint;
         Line2D.Double checkpoint = checkpoints.get(nextCpIndex);
 
-        // Check if segment (prevX, prevY) -> (x, y) intersects the checkpoint line
+        // Comprobar si el segmento (prevX, prevY) -> (x, y) se intersecta con la línea del checkpoint
         Line2D.Double movement = new Line2D.Double(prevX, prevY, x, y);
         if (movement.intersectsLine(checkpoint)) {
             score++;
             currentCheckpoint = (currentCheckpoint + 1) % checkpoints.size();
-            framesAlive += 150; // Give a survival frames bonus for progress!
+            framesAlive += 150; // Dar un bono de fotogramas de supervivencia por progreso!
         }
     }
 
     public void calculateFitness() {
-        // High reward for checkpoints crossed, with frames alive as secondary tiebreaker
+        // Alta recompensa por checkpoints cruzados, con fotogramas de vida como desempate secundario
         this.fitness = (score * 1500.0) + framesAlive;
     }
 
     @Override
     public int compareTo(Car other) {
-        return Double.compare(other.fitness, this.fitness); // Descending order
+        return Double.compare(other.fitness, this.fitness); // Orden descendente
     }
 }

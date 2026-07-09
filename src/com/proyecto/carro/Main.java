@@ -9,13 +9,13 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // native L&F integration
+                // Integración del aspecto y comportamiento nativo (Look and Feel)
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
-                // Fallback silently
+                // Ignorar error y continuar
             }
 
-            // Launch Main Frame
+            // Lanzar la ventana principal
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
         });

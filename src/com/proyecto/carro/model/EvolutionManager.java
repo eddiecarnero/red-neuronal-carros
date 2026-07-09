@@ -9,24 +9,24 @@ import java.util.Random;
 public class EvolutionManager implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final int populationSize; // Size of each population (total / 2)
+    private final int populationSize; // Tamaño de cada población (total / 2)
     private List<Car> populationA;     // Algoritmo A: Genético Clásico (Verde/Celeste)
     private List<Car> populationB;     // Algoritmo B: Hill Climbing / Mutación Pura (Rojo/Rosa)
     private Track track;
     private int trackType;
 
-    // Start coordinates (pointing forward, dynamically calculated from track)
+    // Coordenadas de inicio (apuntando hacia adelante, calculadas dinámicamente desde la pista)
     private double startX;
     private double startY;
     private double startAngle;
 
-    // GA parameters for Algorithm A
+    // Parámetros de evolución para el Algoritmo A
     private int generationA;
     private int highScoreA;
     private double bestFitnessA;
     private Car bestAllTimeA;
 
-    // GA parameters for Algorithm B
+    // Parámetros de evolución para el Algoritmo B
     private int generationB;
     private int highScoreB;
     private double bestFitnessB;
@@ -34,14 +34,14 @@ public class EvolutionManager implements Serializable {
 
     private int numSensors;
     private double mutationRate = 0.05;
-    private final double elitismRate = 0.05; // 5% Elites
+    private final double elitismRate = 0.05; // 5% de Élites
 
     private final Random rand = new Random();
 
     public EvolutionManager(int totalPopulationSize, int numSensors) {
-        this.populationSize = totalPopulationSize / 2; // Split 100 into 50 A and 50 B
+        this.populationSize = totalPopulationSize / 2; // Dividir 100 en 50 para A y 50 para B
         this.numSensors = numSensors;
-        this.trackType = 0; // Default to Oval track
+        this.trackType = 0; // Por defecto pista ovalada
         this.track = new Track(trackType);
         
         java.awt.geom.Point2D.Double start = track.getStartPoint();
@@ -150,10 +150,10 @@ public class EvolutionManager implements Serializable {
     }
 
     /**
-     * Updates physics, sensor rays, checkpoints, and collisions for both populations.
+     * Actualiza la física, rayos de sensores, checkpoints y colisiones para ambas poblaciones.
      */
     public void update() {
-        // 1. Update Population A
+        // 1. Actualizar Población A
         for (Car car : populationA) {
             if (car.isAlive()) {
                 car.update(track.getWallSegments());
@@ -162,7 +162,7 @@ public class EvolutionManager implements Serializable {
             }
         }
 
-        // 2. Update Population B
+        // 2. Actualizar Población B
         for (Car car : populationB) {
             if (car.isAlive()) {
                 car.update(track.getWallSegments());
@@ -178,10 +178,10 @@ public class EvolutionManager implements Serializable {
      * Complejidad: O(N log N + N * G) por ordenar la población.
      */
     public void evolveA() {
-        // Sort A by fitness descending
+        // Ordenar A por fitness descendente
         Collections.sort(populationA);
 
-        // Record historical bests
+        // Registrar los mejores históricos
         Car genBest = populationA.get(0);
         if (genBest.getFitness() > bestFitnessA) {
             bestFitnessA = genBest.getFitness();
@@ -196,7 +196,7 @@ public class EvolutionManager implements Serializable {
             }
         }
 
-        // Elitism (5%)
+        // Elitismo (5%)
         List<Car> nextGen = new ArrayList<>();
         int eliteCount = Math.max(1, (int) (populationSize * elitismRate));
 
@@ -207,7 +207,7 @@ public class EvolutionManager implements Serializable {
             nextGen.add(child);
         }
 
-        // Crossover and mutation
+        // Cruce y mutación
         while (nextGen.size() < populationSize) {
             Car parent1 = selectTournamentA();
             Car parent2 = selectTournamentA();
@@ -245,7 +245,7 @@ public class EvolutionManager implements Serializable {
      * Complejidad: O(N * G) ya que evita ordenar la población.
      */
     public void evolveB() {
-        // Find best individual (linear scan O(N))
+        // Encontrar el mejor individuo (escaneo lineal O(N))
         Car bestCarB = populationB.get(0);
         for (Car car : populationB) {
             if (car.getFitness() > bestCarB.getFitness()) {
@@ -253,7 +253,7 @@ public class EvolutionManager implements Serializable {
             }
         }
 
-        // Record historical bests
+        // Registrar los mejores históricos
         if (bestCarB.getFitness() > bestFitnessB) {
             bestFitnessB = bestCarB.getFitness();
             bestAllTimeB = new Car(startX, startY, startAngle, numSensors);
@@ -267,19 +267,19 @@ public class EvolutionManager implements Serializable {
             }
         }
 
-        // Fill next generation
+        // Llenar la siguiente generación
         List<Car> nextGen = new ArrayList<>();
 
-        // Elite: 1 clone of the best parent in population B
+        // Élite: 1 clon del mejor padre en la población B
         Car elite = new Car(startX, startY, startAngle, numSensors);
         elite.getBrain().copyWeightsFrom(bestCarB.getBrain());
         nextGen.add(elite);
 
-        // Clones with high mutation
+        // Clones con alta mutación
         while (nextGen.size() < populationSize) {
             Car child = new Car(startX, startY, startAngle, numSensors);
             child.getBrain().copyWeightsFrom(bestCarB.getBrain());
-            child.getBrain().mutate(0.12); // High mutation rate for exploratory steps
+            child.getBrain().mutate(0.12); // Alta tasa de mutación para pasos exploratorios
             nextGen.add(child);
         }
 
@@ -291,7 +291,7 @@ public class EvolutionManager implements Serializable {
     }
 
     /**
-     * Asynchronous background evolution logic for both populations.
+     * Lógica de evolución asíncrona en segundo plano para ambas poblaciones.
      */
     public void evolveMultipleGenerations(int gens, Runnable onProgress) {
         int targetGenA = generationA + gens;

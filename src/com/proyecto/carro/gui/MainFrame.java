@@ -17,58 +17,58 @@ public class MainFrame extends JFrame {
     private Car humanCar;
     private boolean humanMode = false;
 
-    // Simulation loop timer
+    // Temporizador del bucle de simulación
     private Timer gameTimer;
 
-    // Key flags for manual play
+    // Banderas de teclas para juego manual
     private boolean upPressed = false;
     private boolean downPressed = false;
     private boolean leftPressed = false;
     private boolean rightPressed = false;
 
-    // GUI Components
+    // Componentes de la GUI
     private GamePanel gamePanel;
 
-    // Stats Labels
+    // Etiquetas de estadísticas
     private JLabel lblGenA, lblGenB;
     private JLabel lblAliveA, lblAliveB;
     private JLabel lblScoreA, lblScoreB;
     private JLabel lblHighScoreA, lblHighScoreB;
     private JLabel lblBestFitnessA, lblBestFitnessB;
 
-    // Controls
+    // Controles
     private JRadioButton rbtnAI;
     private JRadioButton rbtnHuman;
     private JRadioButton rbtnShowAll;
     private JRadioButton rbtnShowBest;
     private JSlider speedSlider;
 
-    // Sensor Configuration
+    // Configuración de sensores
     private JSpinner spinSensors;
     private JComboBox<String> comboTrack;
     private JButton btnReconfigure;
     private JButton btnEditTrack;
     private boolean editingTrack = false;
 
-    // Fast Evolution
+    // Evolución rápida
     private JButton btnEvolve10;
     private JButton btnEvolve15;
     private JButton btnEvolve25;
     private JProgressBar progressEvolve;
 
-    // Theme Colors (Catppuccin Mocha)
+    // Colores del tema (Catppuccin Mocha)
     private final Color bgDark = new Color(30, 30, 46);
     private final Color bgCard = new Color(37, 37, 56);
     private final Color textMain = new Color(205, 214, 244);
     private final Color textMuted = new Color(166, 173, 200);
 
     private final Color btnBgNormal = new Color(49, 50, 68);
-    private final Color btnBgAccent = new Color(137, 180, 250); // Blue
-    private final Color btnBgSuccess = new Color(166, 227, 161); // Green
+    private final Color btnBgAccent = new Color(137, 180, 250); // Azul
+    private final Color btnBgSuccess = new Color(166, 227, 161); // Verde
 
     public MainFrame() {
         int initialSensors = 5;
-        manager = new EvolutionManager(100, initialSensors); // 100 cars
+        manager = new EvolutionManager(100, initialSensors); // 100 carros
         humanCar = new Car(manager.getTrack().getStartPoint().x, manager.getTrack().getStartPoint().y, manager.getTrack().getStartAngle(), initialSensors);
 
         setTitle("IA Conducción Autónoma - Red Neuronal y Algoritmo Genético");
@@ -82,14 +82,14 @@ public class MainFrame extends JFrame {
         setupEvents();
         setupInputHandlers();
 
-        // Start loop
+        // Iniciar bucle
         setupSimulationTimer();
     }
 
     private void initComponents() {
         setLayout(new BorderLayout(15, 15));
 
-        // 1. LEFT PANEL - Game Arena
+        // 1. PANEL IZQUIERDO - Arena del juego
         JPanel panelLeft = new JPanel(new BorderLayout(10, 10));
         panelLeft.setBackground(bgDark);
         panelLeft.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 5));
@@ -105,7 +105,7 @@ public class MainFrame extends JFrame {
 
         add(panelLeft, BorderLayout.CENTER);
 
-        // 2. RIGHT PANEL - Sidebar Controls
+        // 2. PANEL DERECHO - Controles laterales
         JPanel panelRight = new JPanel(new GridBagLayout());
         panelRight.setBackground(bgDark);
         panelRight.setBorder(BorderFactory.createEmptyBorder(15, 5, 15, 15));
@@ -117,7 +117,7 @@ public class MainFrame extends JFrame {
         gbc.weightx = 1.0;
         gbc.gridx = 0;
 
-        // Card 1: Statistics Comparison Grid
+        // Tarjeta 1: Cuadrícula de comparación de estadísticas
         JPanel panelStats = createCardPanel("Comparador de Algoritmos");
         panelStats.setLayout(new GridLayout(7, 3, 5, 5));
 
@@ -136,7 +136,7 @@ public class MainFrame extends JFrame {
         lblBestFitnessA = new JLabel("0"); styleStatLabel(lblBestFitnessA, new Color(137, 180, 250));
         lblBestFitnessB = new JLabel("0"); styleStatLabel(lblBestFitnessB, new Color(243, 139, 168));
 
-        // Column Headers
+        // Encabezados de columna
         JLabel lblHeaderMetric = createMutedLabel("Métrica");
         JLabel lblHeaderA = new JLabel("A: Genético");
         lblHeaderA.setFont(new Font("Segoe UI", Font.BOLD, 10));
@@ -152,32 +152,32 @@ public class MainFrame extends JFrame {
         panelStats.add(lblHeaderA);
         panelStats.add(lblHeaderB);
 
-        // Row 2: Generation
+        // Fila 2: Generación
         panelStats.add(createMutedLabel("Generación:"));
         panelStats.add(lblGenA);
         panelStats.add(lblGenB);
 
-        // Row 3: Alive Count
+        // Fila 3: Cantidad de vivos
         panelStats.add(createMutedLabel("Carros Vivos:"));
         panelStats.add(lblAliveA);
         panelStats.add(lblAliveB);
 
-        // Row 4: Generation Best Checkpoint Score
+        // Fila 4: Mejor puntuación de checkpoint de la generación
         panelStats.add(createMutedLabel("Score (Gen):"));
         panelStats.add(lblScoreA);
         panelStats.add(lblScoreB);
 
-        // Row 5: All-time High Checkpoint Score
+        // Fila 5: Mejor puntuación histórica de checkpoint
         panelStats.add(createMutedLabel("Récord Abs:"));
         panelStats.add(lblHighScoreA);
         panelStats.add(lblHighScoreB);
 
-        // Row 6: Max Fitness
+        // Fila 6: Fitness Máximo
         panelStats.add(createMutedLabel("Aptitud Máx:"));
         panelStats.add(lblBestFitnessA);
         panelStats.add(lblBestFitnessB);
 
-        // Row 7: Algorithmic Complexity Formula (Big-O)
+        // Fila 7: Fórmula de complejidad algorítmica (Big-O)
         panelStats.add(createMutedLabel("Complejidad:"));
         
         JLabel lblCompA = new JLabel("O(N log N + N*G)");
@@ -196,7 +196,7 @@ public class MainFrame extends JFrame {
         gbc.gridy = 0;
         panelRight.add(panelStats, gbc);
 
-        // Card 2: Interactive Controls
+        // Tarjeta 2: Controles interactivos
         JPanel panelControls = createCardPanel("Controles");
         panelControls.setLayout(new GridBagLayout());
         GridBagConstraints gbcCtrl = new GridBagConstraints();
@@ -204,7 +204,7 @@ public class MainFrame extends JFrame {
         gbcCtrl.insets = new Insets(4, 4, 4, 4);
         gbcCtrl.weightx = 1.0;
 
-        // Mode switch
+        // Interruptor de modo
         JLabel lblMode = new JLabel("Modo de Juego:");
         lblMode.setForeground(textMuted);
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 0; gbcCtrl.gridwidth = 1;
@@ -222,7 +222,7 @@ public class MainFrame extends JFrame {
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 1; gbcCtrl.gridwidth = 2;
         panelControls.add(panelModes, gbcCtrl);
 
-        // View Mode
+        // Modo de vista
         JLabel lblView = new JLabel("Visualización (IA):");
         lblView.setForeground(textMuted);
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 2; gbcCtrl.gridwidth = 1;
@@ -240,13 +240,13 @@ public class MainFrame extends JFrame {
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 3; gbcCtrl.gridwidth = 2;
         panelControls.add(panelViews, gbcCtrl);
 
-        // Speed Slider
+        // Deslizador de velocidad
         JLabel lblSpeed = new JLabel("Velocidad de Simulación:");
         lblSpeed.setForeground(textMuted);
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 4; gbcCtrl.gridwidth = 2;
         panelControls.add(lblSpeed, gbcCtrl);
 
-        speedSlider = new JSlider(JSlider.HORIZONTAL, 0, 3, 2); // 0: Hyper, 1: Fast, 2: Normal, 3: Slow
+        speedSlider = new JSlider(JSlider.HORIZONTAL, 0, 3, 2); // 0: Híper, 1: Rápido, 2: Normal, 3: Lento
         speedSlider.setBackground(bgCard);
         speedSlider.setFocusable(false);
         gbcCtrl.gridx = 0; gbcCtrl.gridy = 5; gbcCtrl.gridwidth = 2;
@@ -255,7 +255,7 @@ public class MainFrame extends JFrame {
         gbc.gridy = 1;
         panelRight.add(panelControls, gbc);
 
-        // Card 3: Dynamic Sensors Configuration (Varies Input size)
+        // Tarjeta 3: Configuración dinámica de sensores (varía el tamaño de entrada)
         JPanel panelSensors = createCardPanel("Escalabilidad de Entradas (LIDAR)");
         panelSensors.setLayout(new GridBagLayout());
         GridBagConstraints gbcSens = new GridBagConstraints();
@@ -269,7 +269,7 @@ public class MainFrame extends JFrame {
         gbcSens.gridx = 0; gbcSens.gridy = 0;
         panelSensors.add(lblSens, gbcSens);
 
-        // Spinner allowing 1 to 20 sensors (Varies input neurons dynamically)
+        // Selector que permite de 1 a 20 sensores (varía las neuronas de entrada dinámicamente)
         spinSensors = new JSpinner(new SpinnerNumberModel(5, 1, 20, 1));
         spinSensors.setBackground(bgCard);
         spinSensors.setForeground(textMain);
@@ -289,7 +289,7 @@ public class MainFrame extends JFrame {
         comboTrack.setForeground(textMain);
         comboTrack.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         comboTrack.setFocusable(false);
-        comboTrack.setSelectedIndex(0); // Starts on Oval
+        comboTrack.setSelectedIndex(0); // Comienza en el Óvalo
         gbcSens.gridx = 1; gbcSens.gridy = 1;
         panelSensors.add(comboTrack, gbcSens);
 
@@ -308,7 +308,7 @@ public class MainFrame extends JFrame {
         gbc.gridy = 2;
         panelRight.add(panelSensors, gbc);
 
-        // Card 4: Instant Fast Evolution
+        // Tarjeta 4: Evolución rápida de fondo
         JPanel panelFastEvolve = createCardPanel("Evolución Rápida de Fondo");
         panelFastEvolve.setLayout(new GridBagLayout());
         GridBagConstraints gbcFast = new GridBagConstraints();
@@ -374,13 +374,13 @@ public class MainFrame extends JFrame {
             updateLiveStats();
         });
 
-        // Reconfigures the AI network inputs
+        // Reconfigura las entradas de la red de IA
         btnReconfigure.addActionListener(e -> reconfigureSensors());
-
-        // Toggles track editor mode
+ 
+        // Alterna el modo editor de pista
         btnEditTrack.addActionListener(e -> toggleTrackEditor());
-
-        // Fast Evolution Action Listeners (10, 15, 25 generations)
+ 
+        // Listeners de acción para la evolución rápida (10, 15, 25 generaciones)
         btnEvolve10.addActionListener(e -> runBackgroundEvolution(10));
         btnEvolve15.addActionListener(e -> runBackgroundEvolution(15));
         btnEvolve25.addActionListener(e -> runBackgroundEvolution(25));
@@ -418,10 +418,10 @@ public class MainFrame extends JFrame {
     private int getTimerDelay() {
         int val = speedSlider.getValue();
         switch (val) {
-            case 0: return 3;   // Hyper speed (updates 15 updates per loop)
-            case 1: return 8;   // Fast
+            case 0: return 3;   // Híper velocidad (realiza 15 actualizaciones por tick)
+            case 1: return 8;   // Rápida
             case 2: return 20;  // Normal
-            case 3: return 60;  // Slow
+            case 3: return 60;  // Lenta
             default: return 20;
         }
     }
@@ -462,7 +462,7 @@ public class MainFrame extends JFrame {
                 }
             }
         } else {
-            // AI Mode
+            // Modo IA
             int updatesPerTick = 1;
             if (speedSlider.getValue() == 0) {
                 updatesPerTick = 15;
@@ -496,7 +496,7 @@ public class MainFrame extends JFrame {
             humanCar.reset(startX, startY, startAngle);
         }
         
-        // Reset key flags
+        // Restablecer banderas de teclas
         upPressed = false; downPressed = false;
         leftPressed = false; rightPressed = false;
     }
@@ -523,7 +523,7 @@ public class MainFrame extends JFrame {
     private void updateLiveStats() {
         if (humanMode) return;
 
-        // Algoritmo A (Genetic Algorithm)
+        // Algoritmo A (Algoritmo Genético)
         lblGenA.setText(String.valueOf(manager.getGenerationA()));
         int aliveA = 0;
         int maxScoreA = 0;
@@ -540,7 +540,7 @@ public class MainFrame extends JFrame {
         lblHighScoreA.setText(String.valueOf(manager.getHighScoreA()));
         lblBestFitnessA.setText(String.format("%.0f", manager.getBestFitnessA()));
 
-        // Algoritmo B (Hill Climbing / Mutation)
+        // Algoritmo B (Búsqueda Local / Mutación)
         lblGenB.setText(String.valueOf(manager.getGenerationB()));
         int aliveB = 0;
         int maxScoreB = 0;
@@ -622,7 +622,7 @@ public class MainFrame extends JFrame {
             editingTrack = true;
             gameTimer.stop();
 
-            // If not already on Custom track, load its waypoints in memory so they have a starting point
+            // Si no está ya en la pista personalizada, cargar sus puntos de control en memoria para tener un punto de partida
             int currentTrack = comboTrack.getSelectedIndex();
             if (currentTrack != 4) {
                 int sensors = (int) spinSensors.getValue();
@@ -634,9 +634,9 @@ public class MainFrame extends JFrame {
             btnEditTrack.setText("Guardar Pista y Entrenar");
             styleButton(btnEditTrack, btnBgSuccess, Color.BLACK);
 
-            // Disable other controls while editing
+            // Deshabilitar otros controles durante la edición
             setControlsEnabled(false);
-            btnEditTrack.setEnabled(true); // Keep itself enabled!
+            btnEditTrack.setEnabled(true); // Mantenerse a sí mismo habilitado
 
             JOptionPane.showMessageDialog(this,
                 "Modo Editor Activado:\n" +
@@ -648,7 +648,7 @@ public class MainFrame extends JFrame {
         } else {
             editingTrack = false;
 
-            // Save waypoints to file
+            // Guardar puntos de control en el archivo
             java.util.List<java.awt.geom.Point2D.Double> pts = manager.getTrack().getBasePoints();
             com.proyecto.carro.model.Track.saveCustomWaypoints(pts);
 
@@ -656,16 +656,16 @@ public class MainFrame extends JFrame {
             btnEditTrack.setText("Editar Pista Personalizada");
             styleButton(btnEditTrack, btnBgNormal, textMain);
 
-            // Select "Circuito Personalizado" in combo
+            // Seleccionar "Circuito Personalizado" en el selector
             comboTrack.setSelectedIndex(4);
 
-            // Enable controls and reconfigure
+            // Habilitar controles y reconfigurar
             setControlsEnabled(true);
             reconfigureSensors();
         }
     }
 
-    // Card Helper
+    // Ayudante de tarjetas
     private JPanel createCardPanel(String title) {
         JPanel card = new JPanel();
         card.setBackground(bgCard);

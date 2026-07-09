@@ -15,7 +15,7 @@ public class Track {
     private final List<Line2D.Double> checkpoints;
     private final List<Point2D.Double> centerLine;
 
-    private final int trackType; // 0: Oval, 1: Wavy, 2: Grand Prix, 3: Maze, 4: Custom
+    private final int trackType; // 0: Óvalo, 1: Sinuoso, 2: Grand Prix, 3: Laberinto, 4: Personalizado
     private final List<Point2D.Double> basePoints;
 
     private final double centerX = 225.0;
@@ -52,7 +52,7 @@ public class Track {
                 pw.println(p.x + "," + p.y);
             }
         } catch (IOException e) {
-            System.err.println("Error saving custom waypoints: " + e.getMessage());
+            System.err.println("Error al guardar los puntos de control personalizados: " + e.getMessage());
         }
     }
 
@@ -72,15 +72,15 @@ public class Track {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error loading custom waypoints: " + e.getMessage());
+                System.err.println("Error al cargar los puntos de control personalizados: " + e.getMessage());
             }
         }
         return points;
     }
 
     private void generateSplineTrack() {
-        // If basePoints is already populated (from editor in memory), use it;
-        // otherwise, load based on trackType
+        // Si basePoints ya está cargado (desde el editor en memoria), usarlo;
+        // de lo contrario, cargar según trackType
         if (basePoints.isEmpty()) {
             switch (trackType) {
                 case 0: // Óvalo Clásico (Fácil)
@@ -135,7 +135,7 @@ public class Track {
                     if (!loaded.isEmpty()) {
                         basePoints.addAll(loaded);
                     } else {
-                        // Fallback to Oval if no file exists yet
+                        // Usar óvalo por defecto si no existe el archivo aún
                         basePoints.add(new Point2D.Double(350, 120));
                         basePoints.add(new Point2D.Double(380, 225));
                         basePoints.add(new Point2D.Double(350, 330));
@@ -147,7 +147,7 @@ public class Track {
                     }
                     break;
 
-                default: // Fallback to Oval
+                default: // Usar óvalo por defecto
                     basePoints.add(new Point2D.Double(350, 120));
                     basePoints.add(new Point2D.Double(380, 225));
                     basePoints.add(new Point2D.Double(350, 330));
@@ -163,7 +163,7 @@ public class Track {
         int N = basePoints.size();
         int stepsPerSegment = 10;
 
-        // 1. Interpolate waypoints using Catmull-Rom
+        // 1. Interpolar puntos de control usando Catmull-Rom
         for (int i = 0; i < N; i++) {
             Point2D.Double p0 = basePoints.get((i - 1 + N) % N);
             Point2D.Double p1 = basePoints.get(i);
@@ -176,12 +176,12 @@ public class Track {
             }
         }
 
-        // 2. Generate inner and outer boundaries using offset curves
+        // 2. Generar límites interiores y exteriores usando curvas de desplazamiento
         List<Point2D.Double> outerPoints = new ArrayList<>();
         List<Point2D.Double> innerPoints = new ArrayList<>();
         int numCenterPoints = centerLine.size();
         
-        // Slightly wider track for Oval/Wavy to make it easier, narrower for GP/Maze
+        // Pista ligeramente más ancha para Óvalo/Sinuoso para facilitar, más estrecha para GP/Laberinto
         double halfWidth = (trackType <= 1) ? 30.0 : 27.5; 
 
         for (int i = 0; i < numCenterPoints; i++) {
@@ -212,7 +212,7 @@ public class Track {
             innerWall.addPoint((int) ix, (int) iy);
         }
 
-        // 3. Decompose boundaries into Line2D segments
+        // 3. Descomponer límites en segmentos Line2D
         for (int i = 0; i < numCenterPoints; i++) {
             Point2D.Double oCurr = outerPoints.get(i);
             Point2D.Double oNext = outerPoints.get((i + 1) % numCenterPoints);
@@ -223,7 +223,7 @@ public class Track {
             wallSegments.add(new Line2D.Double(iCurr.x, iCurr.y, iNext.x, iNext.y));
         }
 
-        // 4. Generate checkpoints (20 for all track types)
+        // 4. Generar checkpoints (20 para todos los tipos de pista)
         int numCheckpoints = 20;
         int step = numCenterPoints / numCheckpoints;
         for (int j = 0; j < numCheckpoints; j++) {
@@ -292,7 +292,7 @@ public class Track {
 
         double halfWidth = (trackType <= 1) ? 30.0 : 27.5;
 
-        // 1. Fill track floor
+        // 1. Pintar la pista
         g2d.setColor(trackFloorColor);
         g2d.setStroke(new BasicStroke((float) (halfWidth * 2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         
@@ -306,19 +306,19 @@ public class Track {
             g2d.draw(path);
         }
 
-        // 2. Draw wall boundaries
+        // 2. Dibujar muros de contención
         g2d.setColor(wallColor);
         g2d.setStroke(new BasicStroke(2.5f));
         for (Line2D.Double wall : wallSegments) {
             g2d.draw(wall);
         }
 
-        // 3. Draw checkpoints
+        // 3. Dibujar checkpoints
         g2d.setStroke(new BasicStroke(1.5f));
         for (int i = 0; i < checkpoints.size(); i++) {
             Line2D.Double cp = checkpoints.get(i);
             if (i == 0) {
-                g2d.setColor(new Color(249, 226, 175, 120)); // Gold starting line
+                g2d.setColor(new Color(249, 226, 175, 120)); // Línea de salida dorada
             } else {
                 g2d.setColor(checkpointColor);
             }
