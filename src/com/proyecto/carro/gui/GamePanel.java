@@ -27,6 +27,12 @@ public class GamePanel extends JPanel {
     private int selectedIndex = -1;
     private final int waypointRadius = 7;
 
+    // Pan & Zoom Variables
+    private double zoomFactor = 1.0;
+    private double offsetX = 0.0;
+    private double offsetY = 0.0;
+    private Point dragStartPoint = null;
+
     // Theme Colors (Catppuccin Mocha)
     private final Color bgDark = new Color(30, 30, 46);
 
@@ -48,6 +54,7 @@ public class GamePanel extends JPanel {
         setPreferredSize(new Dimension(450, 450));
         setBackground(bgDark);
         setupMouseListeners();
+        setupZoomListeners();
     }
 
     public void setManager(EvolutionManager manager) {
@@ -77,63 +84,116 @@ public class GamePanel extends JPanel {
         return editorMode;
     }
 
+    /**
+     * Resets the zoom and panning translation offsets to default.
+     */
+    public void resetCamera() {
+        zoomFactor = 1.0;
+        offsetX = 0.0;
+        offsetY = 0.0;
+        repaint();
+    }
+
+    private void setupZoomListeners() {
+        addMouseWheelListener(e -> {
+            double oldZoom = zoomFactor;
+            double scaleVal = 1.1;
+
+            if (e.getWheelRotation() < 0) {
+                // Zoom In
+                zoomFactor = Math.min(4.0, zoomFactor * scaleVal);
+            } else {
+                // Zoom Out
+                zoomFactor = Math.max(0.4, zoomFactor / scaleVal);
+            }
+
+            // Adjust translation offsets so the zoom centers on the mouse cursor
+            Point mousePt = e.getPoint();
+            double mouseWorldX = (mousePt.x - offsetX) / oldZoom;
+            double mouseWorldY = (mousePt.y - offsetY) / oldZoom;
+
+            offsetX = mousePt.x - mouseWorldX * zoomFactor;
+            offsetY = mousePt.y - mouseWorldY * zoomFactor;
+
+            repaint();
+        });
+    }
+
     private void setupMouseListeners() {
         MouseAdapter mouseAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (!editorMode || manager == null) return;
+                if (manager == null) return;
 
-                List<Point2D.Double> basePoints = manager.getTrack().getBasePoints();
-                Point mousePt = e.getPoint();
-
-                // 1. Check if clicked on a waypoint
-                selectedIndex = -1;
-                selectedWaypoint = null;
-                for (int i = 0; i < basePoints.size(); i++) {
-                    Point2D.Double pt = basePoints.get(i);
-                    if (mousePt.distance(pt) < waypointRadius + 5) {
-                        selectedIndex = i;
-                        selectedWaypoint = pt;
-                        break;
-                    }
-                }
-
-                // 2. Right-click deletes a waypoint (keep at least 4 for splines)
-                if (SwingUtilities.isRightMouseButton(e) && selectedIndex != -1) {
-                    if (basePoints.size() > 4) {
-                        basePoints.remove(selectedIndex);
-                        manager.getTrack().regenerate();
-                        selectedWaypoint = null;
-                        selectedIndex = -1;
-                        repaint();
-                    } else {
-                        JOptionPane.showMessageDialog(GamePanel.this,
-                            "El circuito debe tener al menos 4 puntos de control para formar la pista.",
-                            "No se puede eliminar", JOptionPane.WARNING_MESSAGE);
-                    }
+                // Reset camera offset on middle-click (scroll-wheel click)
+                if (SwingUtilities.isMiddleMouseButton(e)) {
+                    resetCamera();
                     return;
                 }
 
-                // 3. Double-click adds a new waypoint at double-clicked coordinates
-                if (e.getClickCount() == 2 && !SwingUtilities.isRightMouseButton(e) && selectedIndex == -1) {
-                    Point2D.Double newPt = new Point2D.Double(e.getX(), e.getY());
-                    if (basePoints.isEmpty()) {
-                        basePoints.add(newPt);
-                    } else {
-                        // Find the closest waypoint index and insert after it
-                        int closestIdx = 0;
-                        double minDist = Double.MAX_VALUE;
-                        for (int i = 0; i < basePoints.size(); i++) {
-                            double d = newPt.distance(basePoints.get(i));
-                            if (d < minDist) {
-                                minDist = d;
-                                closestIdx = i;
-                            }
+                List<Point2D.Double> basePoints = manager.getTrack().getBasePoints();
+
+                // Convert screen mouse coordinates to world coordinates
+                double worldX = (e.getX() - offsetX) / zoomFactor;
+                double worldY = (e.getY() - offsetY) / zoomFactor;
+                Point2D.Double worldPt = new Point2D.Double(worldX, worldY);
+
+                // 1. Check if clicked on a waypoint (only active in editor mode)
+                selectedIndex = -1;
+                selectedWaypoint = null;
+
+                if (editorMode) {
+                    for (int i = 0; i < basePoints.size(); i++) {
+                        Point2D.Double pt = basePoints.get(i);
+                        if (worldPt.distance(pt) < (waypointRadius / zoomFactor) + 6) {
+                            selectedIndex = i;
+                            selectedWaypoint = pt;
+                            break;
                         }
-                        basePoints.add((closestIdx + 1) % (basePoints.size() + 1), newPt);
                     }
-                    manager.getTrack().regenerate();
-                    repaint();
+
+                    // 2. Right-click deletes a waypoint (keep at least 4 for splines)
+                    if (SwingUtilities.isRightMouseButton(e) && selectedIndex != -1) {
+                        if (basePoints.size() > 4) {
+                            basePoints.remove(selectedIndex);
+                            manager.getTrack().regenerate();
+                            selectedWaypoint = null;
+                            selectedIndex = -1;
+                            repaint();
+                        } else {
+                            JOptionPane.showMessageDialog(GamePanel.this,
+                                "El circuito debe tener al menos 4 puntos de control para formar la pista.",
+                                "No se puede eliminar", JOptionPane.WARNING_MESSAGE);
+                        }
+                        return;
+                    }
+
+                    // 3. Double-click adds a new waypoint at double-clicked coordinates
+                    if (e.getClickCount() == 2 && !SwingUtilities.isRightMouseButton(e) && selectedIndex == -1) {
+                        Point2D.Double newPt = new Point2D.Double(worldX, worldY);
+                        if (basePoints.isEmpty()) {
+                            basePoints.add(newPt);
+                        } else {
+                            int closestIdx = 0;
+                            double minDist = Double.MAX_VALUE;
+                            for (int i = 0; i < basePoints.size(); i++) {
+                                double d = newPt.distance(basePoints.get(i));
+                                if (d < minDist) {
+                                    minDist = d;
+                                    closestIdx = i;
+                                }
+                            }
+                            basePoints.add((closestIdx + 1) % (basePoints.size() + 1), newPt);
+                        }
+                        manager.getTrack().regenerate();
+                        repaint();
+                        return;
+                    }
+                }
+
+                // 4. Start Panning (right-click always, or left-click when not dragging waypoints)
+                if (SwingUtilities.isRightMouseButton(e) || selectedWaypoint == null) {
+                    dragStartPoint = e.getPoint();
                 }
             }
 
@@ -141,23 +201,36 @@ public class GamePanel extends JPanel {
             public void mouseReleased(MouseEvent e) {
                 selectedWaypoint = null;
                 selectedIndex = -1;
+                dragStartPoint = null;
             }
         };
 
         MouseMotionAdapter motionAdapter = new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (!editorMode || selectedWaypoint == null) return;
+                // 1. Handle Waypoint Dragging (Left-click drag in editor mode)
+                if (editorMode && selectedWaypoint != null && !SwingUtilities.isRightMouseButton(e)) {
+                    double worldX = (e.getX() - offsetX) / zoomFactor;
+                    double worldY = (e.getY() - offsetY) / zoomFactor;
 
-                // Constrain coordinates to fit safely inside panel boundary
-                double newX = Math.max(10, Math.min(440, e.getX()));
-                double newY = Math.max(10, Math.min(440, e.getY()));
+                    // Constrain coordinates to fit safely inside the panel boundary
+                    selectedWaypoint.x = Math.max(10, Math.min(440, worldX));
+                    selectedWaypoint.y = Math.max(10, Math.min(440, worldY));
 
-                selectedWaypoint.x = newX;
-                selectedWaypoint.y = newY;
+                    manager.getTrack().regenerate();
+                    repaint();
+                }
+                // 2. Handle Canvas Panning (Dragging)
+                else if (dragStartPoint != null) {
+                    double dx = e.getX() - dragStartPoint.x;
+                    double dy = e.getY() - dragStartPoint.y;
 
-                manager.getTrack().regenerate();
-                repaint();
+                    offsetX += dx;
+                    offsetY += dy;
+
+                    dragStartPoint = e.getPoint();
+                    repaint();
+                }
             }
         };
 
@@ -174,6 +247,13 @@ public class GamePanel extends JPanel {
 
         if (manager == null) return;
         Track track = manager.getTrack();
+
+        // Save default transformation matrix
+        AffineTransform oldTransform = g2d.getTransform();
+
+        // Apply custom panning and zoom factor transformations
+        g2d.translate(offsetX, offsetY);
+        g2d.scale(zoomFactor, zoomFactor);
 
         // 1. Draw track floor and boundaries
         track.draw(g2d);
@@ -198,6 +278,8 @@ public class GamePanel extends JPanel {
                 g2d.setColor(Color.WHITE);
                 g2d.drawString(String.valueOf(i), (int)pt.x - 3, (int)pt.y - 10);
             }
+            // Restore default transform and return
+            g2d.setTransform(oldTransform);
             return;
         }
 
@@ -268,6 +350,9 @@ public class GamePanel extends JPanel {
                 drawCar(g2d, bestB, carBestB);
             }
         }
+
+        // Restore default transformation matrix
+        g2d.setTransform(oldTransform);
     }
 
     private void drawCar(Graphics2D g2d, Car car, Color bodyColor) {
